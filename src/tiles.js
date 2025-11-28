@@ -1,0 +1,43 @@
+// Plateau 40 cases en anneau, ordre inspiré de ta liste
+export const TILES = [
+  { type: "DEPART", label: "Départ (quand tu passes : ton partenaire boit 1 shot)" }, // 0
+  { type: "SOBRE", label: "Sobre" },
+  { type: "SHOT1", label: "+1 Shot" },
+  { type: "CARTE", label: "Carte spéciale" },
+  { type: "SEXY", label: "Défi Sexy" },
+  { type: "TAF1", label: "+1 Taf" },
+  { type: "SOBRE", label: "Sobre" },
+  { type: "FUN", label: "Défi Fun" },
+  { type: "PRISON", label: "Prison (1 tour bloqué + 1 shot)" }, // <- index 8
+  { type: "SHOT2", label: "+2 Shots" },
+  { type: "SOBRE", label: "Sobre" },
+  { type: "CARTE", label: "Carte spéciale" },
+  { type: "FUN", label: "Défi Fun" },
+  { type: "SHOT1", label: "+1 Shot" },
+  { type: "TAF1", label: "+1 Taf" },
+  { type: "SEXY", label: "Défi Sexy" },
+  { type: "SOBRE", label: "Sobre" },
+  { type: "CARTE", label: "Carte spéciale" },
+  { type: "SHOT2", label: "+2 Shots" },
+  { type: "PARC", label: "Parc gratuit (l’autre boit 1 shot)" },
+  { type: "SOBRE", label: "Sobre" },
+  { type: "FUN", label: "Défi Fun" },
+  { type: "SHOT1", label: "+1 Shot" },
+  { type: "TAF1", label: "+1 Taf" },
+  { type: "CARTE", label: "Carte spéciale" },
+  { type: "SEXY", label: "Défi Sexy" },
+  { type: "SHOT2", label: "+2 Shots" },
+  { type: "SOBRE", label: "Sobre" },
+  { type: "FUN", label: "Défi Fun" },
+  { type: "GO_PRISON", label: "Allez en prison (direct case 8)" }, // envoie à 8
+  { type: "SHOT1", label: "+1 Shot" },
+  { type: "TAF1", label: "+1 Taf" },
+  { type: "CARTE", label: "Carte spéciale" },
+  { type: "SEXY", label: "Défi Sexy" },
+  { type: "SOBRE", label: "Sobre" },
+  { type: "SHOT2", label: "+2 Shots" },
+  { type: "FUN", label: "Défi Fun" },
+  { type: "CARTE", label: "Carte spéciale" },
+  { type: "SEXY", label: "Défi Sexy" },
+  { type: "IMPOT", label: "Impôt sur le revenu → tu bois 2 shots" } // 39
+].map((t, i) => ({ ...t, index: i }));
