@@ -46,8 +46,16 @@ export default function App() {
 
           {/* Écran d’accueil / configuration */}
           <Stack.Screen name="Setup">
-            {(props) => <SetupScreen {...props} onStart={setPlayers} />}
-          </Stack.Screen>
+  {(props) => (
+    <SetupScreen 
+      {...props} 
+      onStart={(playersData) => {
+        setPlayers(playersData);
+        props.navigation.navigate("Game", { playersInit: playersData });
+      }} 
+    />
+  )}
+</Stack.Screen>
 
           {/* Partie en cours */}
           <Stack.Screen name="Game">
