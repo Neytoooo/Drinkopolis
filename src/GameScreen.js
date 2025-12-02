@@ -1,24 +1,41 @@
 import React, { useState, useRef } from "react";
-import { View, Alert } from "react-native";
+import { View, Alert, Text } from "react-native";
 import { TILES } from "./tiles";
 import BoardPortrait from "./BoardPortrait";
 import PlayerPanel from "./components/PlayerPanel";
 import SpecialCard from "./components/SpecialCard";
 import PlayerHand from "./components/PlayerHand";
 import { buildShuffledDeck } from "./cards";
-// IMPORT DU DÉ 3D
-import Dice3D from "./components/Dice3D"; 
 
 // petit helper pour attendre en async
 const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
-export default function GameScreen({ playersInit }) {
+export default function GameScreen(props) {
+  const { route } = props;
+
+  // --- On récupère la source des joueurs ---
+  // 1) Online : route.params.players (venant du socket / lobby)
+  // 2) Offline : props.playersInit (ancienne version locale)
+  const rawPlayers =
+    route?.params?.players || props.playersInit || [];
+
+  if (!rawPlayers || rawPlayers.length === 0) {
+    // Sécurité : évite les crashs si on arrive ici sans joueurs
+    return (
+      <View style={{ flex: 1, backgroundColor: "#050B14", justifyContent: "center", alignItems: "center" }}>
+        <Text style={{ color: "#fff" }}>
+          Aucun joueur fourni à GameScreen.
+        </Text>
+      </View>
+    );
+  }
+
   // ---------- STATE JOUEURS ----------
   const [players, setPlayers] = useState(
-    playersInit.map((p, i) => ({
+    rawPlayers.map((p, i) => ({
       id: String(i),
-      name: p.name,
-      skin: p.skin,
+      name: p.name || `Joueur ${i + 1}`,
+      skin: p.skin || "dealer",
       pos: 0,
       shots: 0,
       tafs: 0,
@@ -48,7 +65,7 @@ export default function GameScreen({ playersInit }) {
   const [discard, setDiscard] = useState([]);
   const [lastCard, setLastCard] = useState(null); // carte spéciale tirée
 
-  // --- NOUVEAUX ÉTATS POUR LE DÉ ---
+  // --- ÉTATS POUR LE DÉ ---
   const [diceResult, setDiceResult] = useState(null);
   const [isRolling, setIsRolling] = useState(false);
 
@@ -262,7 +279,7 @@ export default function GameScreen({ playersInit }) {
 
     // 1. Calcul du résultat
     const roll = Math.ceil(Math.random() * 6);
-    
+
     // 2. Déclenchement de l'animation du dé
     setIsRolling(true);
     setDiceResult(roll);
@@ -273,6 +290,11 @@ export default function GameScreen({ playersInit }) {
   const onDiceLanded = async () => {
     const roll = diceResult;
     const me = playersRef.current[turn]; // Joueur courant
+    if (!me) {
+      setIsRolling(false);
+      setDiceResult(null);
+      return;
+    }
 
     // 3. Animation de déplacement
     await moveStepByStep(me.id, roll);
