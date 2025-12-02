@@ -1,131 +1,117 @@
 import React, { useEffect, useState } from "react";
 import { View, Text, Pressable, StyleSheet } from "react-native";
+import { Image } from "expo-image";
+
+const CARD_BACK = require("../../assets/texture/card_back.png");
 
 export default function Memory({ navigation }) {
 
-  // —————————— Préparation des cartes ——————————
-  const baseSymbols = ["🍺", "🍷", "🔥", "🍀", "🎲", "💋"];
-  const deck = [...baseSymbols, ...baseSymbols] // 12 cartes (6 paires)
-    .sort(() => Math.random() - 0.5)
-    .map((s, i) => ({ id: i, symbol: s }));
+  // —————————— PARAMÈTRES DES NIVEAUX ——————————
+  const levels = [
+    { pairs: 3 }, // Niveau 1
+    { pairs: 4 },
+    { pairs: 5 },
+    { pairs: 6 },
+    { pairs: 8 }, // Niveau 5
+  ];
 
-  const [cards, setCards] = useState(deck);
-  const [visible, setVisible] = useState(true); // toutes les cartes visibles au début
-  const [selected, setSelected] = useState([]); // 0 ou 2 cartes
-  const [matched, setMatched] = useState([]);   // paires trouvées
-  const [turn, setTurn] = useState(1);          // J1 ou J2
-  const [score, setScore] = useState({ 1: 0, 2: 0 });
-  const [end, setEnd] = useState(false);
+  const [level, setLevel] = useState(0); // index du niveau
+  const [visible, setVisible] = useState(true);
+  const [selected, setSelected] = useState([]);
+  const [matched, setMatched] = useState([]);
+  const [cards, setCards] = useState([]);
+  
+  const pairsCount = levels[level].pairs;
 
-  // —————————— Flash de départ ——————————
+  // —————————— CRÉATION DU DECK ——————————
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setVisible(false);
-    }, 1200);
+    const baseSymbols = ["🍺", "🍷", "🔥", "🍀", "🎲", "💋", "☕", "🍫", "🎉", "⚡"];
 
-    return () => clearTimeout(timer);
-  }, []);
+    const deck = baseSymbols
+      .slice(0, pairsCount)
+      .flatMap((s, i) => [
+        { id: `${i}-A`, symbol: s },
+        { id: `${i}-B`, symbol: s }
+      ])
+      .sort(() => Math.random() - 0.5);
 
-  // —————————— Logique du Memory ——————————
+    setCards(deck);
+    setSelected([]);
+    setMatched([]);
+    setVisible(true);
+
+    setTimeout(() => setVisible(false), 1200);
+  }, [level]);
+
+  // —————————— CLIC SUR UNE CARTE ——————————
   const onCardPress = (card) => {
-    if (visible || end) return;                    // pas de clic pendant flash / après fin
-    if (matched.includes(card.id)) return;         // déjà trouvée
-    if (selected.find((c) => c.id === card.id)) return; // déjà sélectionnée
+    if (visible) return;
+    if (matched.includes(card.id)) return;
+    if (selected.some((c) => c.id === card.id)) return;
 
     const newSel = [...selected, card];
     setSelected(newSel);
 
-    // On attend d'avoir 2 cartes
     if (newSel.length === 2) {
       setTimeout(() => {
         const [a, b] = newSel;
 
         if (a.symbol === b.symbol) {
-          // Match !
           setMatched((m) => [...m, a.id, b.id]);
-          setScore((s) => ({ ...s, [turn]: s[turn] + 1 }));
         }
 
         setSelected([]);
-
-        // tournante J1 / J2
-        setTurn((t) => (t === 1 ? 2 : 1));
-
       }, 600);
     }
   };
 
-  // —————————— Vérification de fin ——————————
+  // —————————— PASSAGE AU NIVEAU SUIVANT ——————————
   useEffect(() => {
-    if (matched.length === cards.length) {
-      setEnd(true);
+    if (matched.length === cards.length && cards.length > 0) {
+      setTimeout(() => {
+        if (level < levels.length - 1) {
+          setLevel(level + 1);
+        }
+      }, 700);
     }
   }, [matched]);
-
-  const restart = () => {
-    const newDeck = [...baseSymbols, ...baseSymbols]
-      .sort(() => Math.random() - 0.5)
-      .map((s, i) => ({ id: i, symbol: s }));
-
-    setCards(newDeck);
-    setVisible(true);
-    setSelected([]);
-    setMatched([]);
-    setTurn(1);
-    setScore({ 1: 0, 2: 0 });
-    setEnd(false);
-
-    setTimeout(() => setVisible(false), 1200);
-  };
-
-  const winner = score[1] > score[2] ? "Joueur 1" :
-                 score[2] > score[1] ? "Joueur 2" :
-                 "Égalité";
 
   return (
     <View style={s.wrap}>
       <Text style={s.title}>🧠 MEMORY FLASH</Text>
 
-      {/* ——— Score + tour ——— */}
-      {!end && (
-        <Text style={s.turn}>Tour : {turn === 1 ? "Joueur 1" : "Joueur 2"}</Text>
-      )}
+      <Text style={s.subtitle}>Niveau {level + 1} / {levels.length}</Text>
+      <Text style={s.submini}>
+        Paires trouvées : {matched.length / 2} / {pairsCount}
+      </Text>
 
-      {/* ——— Grille de cartes ——— */}
+      {/* ——— GRILLE DES CARTES ——— */}
       <View style={s.grid}>
         {cards.map((card) => {
-          const isVisible = visible ||
-            selected.find((c) => c.id === card.id) ||
+          const isVisible =
+            visible ||
+            selected.some((c) => c.id === card.id) ||
             matched.includes(card.id);
 
           return (
             <Pressable
               key={card.id}
               onPress={() => onCardPress(card)}
-              style={[s.card, matched.includes(card.id) && s.cardMatched]}
+              style={[s.card]}
             >
-              <Text style={s.cardText}>
-                {isVisible ? card.symbol : "❓"}
-              </Text>
+              {isVisible ? (
+                <Text style={s.cardText}>{card.symbol}</Text>
+              ) : (
+                <Image source={CARD_BACK} style={s.cardImg} contentFit="cover" />
+              )}
             </Pressable>
           );
         })}
       </View>
 
-      {/* ——— FIN DU JEU ——— */}
-      {end && (
-        <View style={s.resultBox}>
-          <Text style={s.result}>Résultat : {winner} !</Text>
-          <Pressable style={s.btn} onPress={restart}>
-            <Text style={s.btnTxt}>Rejouer</Text>
-          </Pressable>
-          <Pressable style={[s.btn, { backgroundColor: "#555" }]}
-            onPress={() => navigation.goBack()}>
-            <Text style={s.btnTxt}>Retour</Text>
-          </Pressable>
-        </View>
-      )}
-
+      <Pressable style={s.btnRetour} onPress={() => navigation.goBack()}>
+        <Text style={s.btnTxt}>Retour</Text>
+      </Pressable>
     </View>
   );
 }
@@ -133,23 +119,29 @@ export default function Memory({ navigation }) {
 const s = StyleSheet.create({
   wrap: {
     flex: 1,
-    backgroundColor: "#0b0b0b",
+    backgroundColor: "#000",
     alignItems: "center",
-    paddingTop: 40,
+    paddingTop: 30,
   },
+
   title: {
     color: "#fff",
     fontSize: 26,
     fontWeight: "900",
-    marginBottom: 10,
   },
-  turn: {
-    color: "#bbb",
+
+  subtitle: {
+    color: "#7cb4ff",
+    fontSize: 22,
+    marginTop: 5,
+  },
+
+  submini: {
+    color: "#ccc",
     fontSize: 16,
     marginBottom: 10,
   },
 
-  // grille responsive
   grid: {
     width: "90%",
     flexDirection: "row",
@@ -160,43 +152,37 @@ const s = StyleSheet.create({
 
   card: {
     width: "30%",
-    aspectRatio: 1,
-    backgroundColor: "#222",
-    borderRadius: 12,
+    aspectRatio: 64 / 89,
+    backgroundColor: "#1c1c1c",
+    borderRadius: 10,
+    overflow: "hidden",
     marginBottom: 12,
     justifyContent: "center",
     alignItems: "center",
   },
 
-  cardMatched: {
-    backgroundColor: "#2ecc71",
+  cardImg: {
+    width: "100%",
+    height: "100%",
   },
 
   cardText: {
     fontSize: 36,
     color: "#fff",
+    fontWeight: "900",
   },
 
-  resultBox: {
-    marginTop: 40,
-    alignItems: "center",
-  },
-  result: {
-    color: "#fff",
-    fontSize: 28,
-    fontWeight: "900",
-    marginBottom: 20,
-  },
-  btn: {
-    backgroundColor: "#2980b9",
-    paddingHorizontal: 20,
+  btnRetour: {
+    marginTop: 25,
+    backgroundColor: "#444",
+    paddingHorizontal: 30,
     paddingVertical: 12,
     borderRadius: 12,
-    marginTop: 10,
   },
+
   btnTxt: {
     color: "#fff",
+    fontSize: 17,
     fontWeight: "900",
-    fontSize: 16,
   },
 });
