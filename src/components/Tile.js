@@ -3,23 +3,49 @@ import { View, Text, StyleSheet } from "react-native";
 import { Image } from "expo-image";
 import { IMAGES, PAWN_SKINS } from "../images";
 
-const COLORS = {
-  DEPART:"#20c997", SOBRE:"#4dabf7", SHOT1:"#fa5252", SHOT2:"#e03131",
-  TAF1:"#b08968", CARTE:"#845ef7", SEXY:"#f06595", FUN:"#fab005",
-  PRISON:"#5f3dc4", GO_PRISON:"#343a40", PARC:"#2b8a3e", IMPOT:"#495057"
+// Palette de couleurs Néon pour le nouveau design
+const NEON_COLORS = {
+  DEPART: "#00ff9d", // Vert alien
+  SOBRE: "#00f3ff",  // Cyan électrique
+  SHOT1: "#ff0055",  // Rose néon
+  SHOT2: "#ff0000",  // Rouge pur
+  TAF1: "#ffaa00",   // Orange ambre
+  CARTE: "#bc13fe",  // Violet laser
+  SEXY: "#ff00ff",   // Magenta
+  FUN: "#ffff00",    // Jaune pur
+  PRISON: "#6a00ff", // Indigo profond
+  GO_PRISON: "#aaaaaa",
+  PARC: "#00ff00",
+  IMPOT: "#ff4444"
 };
 
 export default function Tile({ tile, playersHere = [] }) {
   const src = IMAGES[tile.type] || null;
+  // Récupération de la couleur néon (ou gris par défaut)
+  const glowColor = NEON_COLORS[tile.type] || "#888"; 
 
   return (
-    <View style={[s.tile, { backgroundColor: COLORS[tile.type] || "#666" }]}>
-      {src && <Image source={src} style={s.img} contentFit="cover" transition={80} />}
-      {!src && <Text style={s.label} numberOfLines={2}>{tile.label}</Text>}
+    <View style={[s.container, { borderColor: glowColor, shadowColor: glowColor }]}>
+      
+      {/* Fond semi-transparent pour l'effet vitre */}
+      <View style={s.innerGlass} />
 
+      {/* Contenu (Image ou Texte) */}
+      <View style={s.content}>
+        {src ? (
+          <Image source={src} style={s.img} contentFit="contain" />
+        ) : (
+          <Text style={[s.label, { color: glowColor }]}>
+            {/* On raccourcit le texte pour le design */}
+            {tile.label.replace(/ \(.+\)/, "")}
+          </Text>
+        )}
+      </View>
+
+      {/* Pions des joueurs */}
       <View style={s.pawns}>
         {playersHere.map(p => (
-          <View key={p.id} style={s.pawnWrap}>
+          <View key={p.id} style={[s.pawnWrap, { borderColor: "#fff" }]}>
             <Image
               source={PAWN_SKINS[p.skin] || PAWN_SKINS.kid}
               style={s.pawnImg}
@@ -33,26 +59,61 @@ export default function Tile({ tile, playersHere = [] }) {
 }
 
 const s = StyleSheet.create({
-  tile: {
+  container: {
+    width: "96%", // Un peu d'espace entre les cases
+    height: "96%",
+    borderRadius: 8, // Coins arrondis
+    borderWidth: 1.5, // Bordure fine
+    backgroundColor: "#111", // Fond très sombre
+    justifyContent: "center",
+    alignItems: "center",
+    
+    // Effet GLOW (Ombre portée colorée)
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.8,
+    shadowRadius: 6,
+    elevation: 5, // Pour Android
+  },
+  innerGlass: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "rgba(255,255,255,0.03)", // Léger reflet
+    borderRadius: 8,
+  },
+  content: {
+    flex: 1,
     width: "100%",
-    height: "100%",
-    borderRadius: 0,          // carré
-    overflow: "hidden",
-    justifyContent: "flex-end",
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 2,
   },
-  img: { position: "absolute", inset: 0, width: "100%", height: "100%" },
+  img: { 
+    width: "70%", 
+    height: "70%" 
+  },
   label: {
-    color: "#fff",
-    fontWeight: "800",
-    fontSize: 12,
-    backgroundColor: "#0008",
-    margin: 6,
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 0,
-    alignSelf: "flex-start",
+    fontWeight: "900",
+    fontSize: 10,
+    textAlign: "center",
+    textShadowColor: 'rgba(0, 0, 0, 0.75)',
+    textShadowOffset: {width: -1, height: 1},
+    textShadowRadius: 10
   },
-  pawns: { position: "absolute", bottom: 4, left: 4, right: 4, flexDirection: "row", flexWrap: "wrap", gap: 4 },
-  pawnWrap:{ width: 22, height: 22, borderRadius: 4, backgroundColor: "#0008", overflow: "hidden", borderWidth: 1, borderColor: "#000" },
-  pawnImg:{ width: "100%", height: "100%" }
+  pawns: { 
+    position: "absolute", 
+    bottom: -4, 
+    right: -4, 
+    flexDirection: "row", 
+    flexWrap: "wrap-reverse",
+    gap: 2 
+  },
+  pawnWrap:{ 
+    width: 24, 
+    height: 24, 
+    borderRadius: 12, 
+    backgroundColor: "#000", 
+    borderWidth: 1, 
+    justifyContent: 'center', 
+    alignItems: 'center' 
+  },
+  pawnImg:{ width: "90%", height: "90%" }
 });

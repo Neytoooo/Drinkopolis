@@ -16,9 +16,39 @@ export default function PlayerPanel({ current, onRoll, lastRoll }) {
 }
 
 const s = StyleSheet.create({
-  bar:{ flexDirection:"row", alignItems:"center", padding:10, gap:10, backgroundColor:"#111", borderTopWidth:1, borderTopColor:"#000" },
-  h:{ color:"#fff", fontSize:18, fontWeight:"800" },
-  meta:{ color:"#bbb" },
-  btn:{ backgroundColor:"#22b8cf", paddingHorizontal:16, paddingVertical:10, borderRadius:10 },
-  btnT:{ color:"#001", fontWeight:"800" }
+  bar: { 
+    flexDirection: "row", 
+    alignItems: "center", 
+    padding: 15, 
+    gap: 10, 
+    
+    // Style "Flottant"
+    position: 'absolute',
+    bottom: 20,
+    left: 10,
+    right: 10,
+    backgroundColor: "rgba(20, 30, 48, 0.95)", // Semi-transparent
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.1)',
+    
+    // Ombre
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 5 },
+    shadowOpacity: 0.5,
+    shadowRadius: 10,
+    elevation: 10
+  },
+  h: { color: "#fff", fontSize: 18, fontWeight: "800" },
+  meta: { color: "#bbb", fontSize: 12, marginTop: 2 },
+  btn: { 
+    backgroundColor: "#00f3ff", // Cyan Néon pour le bouton
+    paddingHorizontal: 16, 
+    paddingVertical: 12, 
+    borderRadius: 12,
+    shadowColor: "#00f3ff",
+    shadowOpacity: 0.5,
+    shadowRadius: 8
+  },
+  btnT: { color: "#000", fontWeight: "900" }
 });

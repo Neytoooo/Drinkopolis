@@ -6,9 +6,8 @@ import PlayerPanel from "./components/PlayerPanel";
 import SpecialCard from "./components/SpecialCard";
 import PlayerHand from "./components/PlayerHand";
 import { buildShuffledDeck } from "./cards";
-import MiniGamesScreen from "./components/MiniGamesScreen";
-import TapBattle from "./minigames/TapBattle";
-
+// IMPORT DU DÉ 3D
+import Dice3D from "./components/Dice3D"; 
 
 // petit helper pour attendre en async
 const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -33,6 +32,7 @@ export default function GameScreen({ playersInit }) {
 
   // ref pour toujours avoir la version FRAÎCHE des joueurs dans l’async
   const playersRef = useRef(players);
+
   const updatePlayers = (updater) => {
     setPlayers((prev) => {
       const next = typeof updater === "function" ? updater(prev) : updater;
@@ -44,14 +44,18 @@ export default function GameScreen({ playersInit }) {
   const [turn, setTurn] = useState(0);
   const [lastRoll, setLastRoll] = useState(null);
   const [boardHeight, setBoardHeight] = useState(0);
-
   const [deck, setDeck] = useState(buildShuffledDeck());
   const [discard, setDiscard] = useState([]);
   const [lastCard, setLastCard] = useState(null); // carte spéciale tirée
 
+  // --- NOUVEAUX ÉTATS POUR LE DÉ ---
+  const [diceResult, setDiceResult] = useState(null);
+  const [isRolling, setIsRolling] = useState(false);
+
   const current = players[turn];
   const playersAt = (idx) => players.filter((p) => p.pos === idx);
   const nextIndex = (i) => (i + 1) % players.length;
+
   const mutatePlayer = (id, fn) =>
     updatePlayers((ps) => ps.map((p) => (p.id === id ? fn(p) : p)));
 
@@ -67,7 +71,6 @@ export default function GameScreen({ playersInit }) {
 
     while (remaining > 0) {
       currentPos = (currentPos + dir + len) % len;
-
       updatePlayers((ps) =>
         ps.map((p) =>
           p.id === playerId
@@ -99,7 +102,6 @@ export default function GameScreen({ playersInit }) {
     setLastCard(card); // visible sous le plateau
 
     const snapshotPlayers = playersRef.current;
-
     if (card.kind === "keep") {
       // main max 2 → si pleine, on ignore la nouvelle
       const me = snapshotPlayers.find((p) => p.id === playerId);
@@ -115,7 +117,7 @@ export default function GameScreen({ playersInit }) {
       return;
     }
 
-    // instant (exemples simples)
+    // instant
     const others = snapshotPlayers.filter((p) => p.id !== playerId);
     const nextPlayer =
       others.length > 0 ? others[nextIndex(turn) % others.length] : null;
@@ -145,7 +147,6 @@ export default function GameScreen({ playersInit }) {
         }));
         break;
       case "MOVE_3":
-        // pour l’instant : déplacement instantané (on pourra aussi l’animer plus tard)
         moveBy(playerId, 3);
         break;
       case "BACK_2":
@@ -155,14 +156,11 @@ export default function GameScreen({ playersInit }) {
         teleportToPrison(playerId);
         break;
       case "CHANCE":
-        // à affiner plus tard
         break;
       default:
         break;
     }
   };
-
-
 
   const moveBy = (playerId, delta) => {
     updatePlayers((ps) =>
@@ -243,8 +241,10 @@ export default function GameScreen({ playersInit }) {
     }
   };
 
-  // ---------- TOUR DE JEU ----------
+  // ---------- TOUR DE JEU (1: LANCER) ----------
   const turnRoll = async () => {
+    if (isRolling) return; // Empêche le spam du bouton
+
     const snapshot = playersRef.current;
     const me = snapshot[turn];
     if (!me) return;
@@ -260,22 +260,35 @@ export default function GameScreen({ playersInit }) {
       return;
     }
 
+    // 1. Calcul du résultat
     const roll = Math.ceil(Math.random() * 6);
+    
+    // 2. Déclenchement de l'animation du dé
+    setIsRolling(true);
+    setDiceResult(roll);
     setLastRoll(roll);
+  };
 
-    // ANIMATION de déplacement
+  // ---------- TOUR DE JEU (2: ATTERRISSAGE DU DÉ) ----------
+  const onDiceLanded = async () => {
+    const roll = diceResult;
+    const me = playersRef.current[turn]; // Joueur courant
+
+    // 3. Animation de déplacement
     await moveStepByStep(me.id, roll);
 
-    // résolution de la case d’arrivée
+    // 4. Résolution de la case d’arrivée
     resolveTile(me.id, roll);
 
-    // joueur suivant
+    // 5. Fin du tour : on reset le dé et on passe au joueur suivant
+    setIsRolling(false);
+    setDiceResult(null); // Cache le dé pour réafficher le logo (optionnel)
     setTurn(nextIndex(turn));
   };
 
   // ---------- RENDER ----------
   return (
-    <View style={{ flex: 1, backgroundColor: "#000" }}>
+    <View style={{ flex: 1, backgroundColor: "#050B14" }}>
       {/* Plateau */}
       <View
         style={{ flex: 1, justifyContent: "center", alignItems: "center" }}
@@ -287,6 +300,9 @@ export default function GameScreen({ playersInit }) {
             playersAt(idx).map((p) => ({ ...p, isActive: p.id === current.id }))
           }
           maxHeight={boardHeight}
+          // Props du Dé
+          diceResult={diceResult}
+          onDiceLand={onDiceLanded}
         />
       </View>
 
@@ -296,8 +312,10 @@ export default function GameScreen({ playersInit }) {
       {/* Main du joueur courant */}
       <PlayerHand cards={current?.hand || []} />
 
-      {/* Panneau bas */}
-      <PlayerPanel current={current} lastRoll={lastRoll} onRoll={turnRoll} />
+      {/* Panneau bas (Caché pendant que le dé roule pour éviter les bugs) */}
+      {!isRolling && (
+        <PlayerPanel current={current} lastRoll={lastRoll} onRoll={turnRoll} />
+      )}
     </View>
   );
 }
