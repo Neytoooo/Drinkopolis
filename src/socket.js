@@ -1,6 +1,6 @@
 import { io } from "socket.io-client";
 
-const SOCKET_URL = "https://description-style-stamps-wesley.trycloudflare.com";
+const SOCKET_URL = "https://saving-slightly-enabled-enjoyed.trycloudflare.com";
 
 export const socket = io(SOCKET_URL, {
   autoConnect: false,

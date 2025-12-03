@@ -4,7 +4,6 @@ import { Image } from "expo-image";
 import { PAWN_SKIN_LIST } from "./images";
 import { socket } from "./socket"; 
 
-// On récupère "navigation" via les props fournies par React Navigation
 export default function SetupScreen({ navigation }) {
   // --- ÉTATS ---
   const [myName, setMyName] = useState("");
@@ -34,11 +33,9 @@ export default function SetupScreen({ navigation }) {
       setLobbyPlayers(players);
     });
 
-    // --- C'EST ICI QUE ÇA CHANGE ---
+    // --- MODIFICATION ICI : ON PASSE roomId ---
     socket.on("gameStarted", () => {
-      // Au lieu de onStart(), on navigue directement vers Game
-      // On envoie la liste des joueurs via les params de navigation
-      navigation.navigate("Game", { players: lobbyPlayers });
+      navigation.navigate("Game", { players: lobbyPlayers, roomId: roomId });
     });
 
     return () => {
@@ -47,7 +44,7 @@ export default function SetupScreen({ navigation }) {
       socket.off("updateRoom");
       socket.off("gameStarted");
     };
-  }, [lobbyPlayers]); // Ajout de lobbyPlayers en dépendance pour être sûr d'avoir la liste à jour
+  }, [lobbyPlayers, roomId]); // Ajout de roomId aux dépendances
 
   // --- ACTIONS ---
   const handleCreateRoom = () => {
@@ -67,7 +64,6 @@ export default function SetupScreen({ navigation }) {
     socket.emit("startGame", roomId);
   };
 
-  // --- FONCTION PARTAGER ---
   const onShareInvite = async () => {
     try {
       const result = await Share.share({
@@ -102,7 +98,7 @@ export default function SetupScreen({ navigation }) {
       <Text style={s.title}>DRINKOPOLIS</Text>
       <Text style={s.subtitle}>ONLINE</Text>
 
-      {/* --- MENU --- */}
+      {/* --- MENU PRINCIPAL --- */}
       {step === "menu" && (
         <View style={s.card}>
           <Text style={s.label}>Ton Pseudo :</Text>
@@ -118,12 +114,14 @@ export default function SetupScreen({ navigation }) {
 
           <View style={s.divider} />
 
+          {/* Créer Room */}
           <Pressable style={s.btnCreate} onPress={handleCreateRoom}>
             <Text style={s.btnT}>👑 CRÉER UNE SALLE</Text>
           </Pressable>
 
           <Text style={s.orText}>- OU -</Text>
 
+          {/* Rejoindre Room */}
           <View style={s.joinRow}>
             <TextInput 
               style={[s.input, s.inputCode]} 
@@ -138,10 +136,22 @@ export default function SetupScreen({ navigation }) {
               <Text style={s.btnT}>REJOINDRE</Text>
             </Pressable>
           </View>
+
+          <View style={s.divider} />
+
+          {/* --- NOUVEAU BOUTON SALLE D'ARCADE --- */}
+          <Pressable 
+            style={s.btnArcade} 
+            onPress={() => navigation.navigate("MiniGames")}
+          >
+            <Text style={s.btnT}>🎮 SALLE D'ARCADE</Text>
+            <Text style={s.btnSub}>Jouer aux mini-jeux solo</Text>
+          </Pressable>
+
         </View>
       )}
 
-      {/* --- LOBBY --- */}
+      {/* --- LOBBY (SALLE D'ATTENTE) --- */}
       {step === "lobby" && (
         <View style={s.lobbyCard}>
           <View style={s.lobbyHeader}>
@@ -204,6 +214,8 @@ const s = StyleSheet.create({
   skinActive: { backgroundColor: "#0f172a", borderColor: "#00f3ff" },
   divider: { height:1, backgroundColor:"#333", marginVertical:20 },
   btnCreate: { backgroundColor: "#00f3ff", padding: 16, borderRadius: 14, alignItems:"center", shadowColor:"#00f3ff", shadowOpacity:0.4, shadowRadius:12 },
+  btnArcade: { backgroundColor: "#8b5cf6", padding: 16, borderRadius: 14, alignItems:"center", marginTop: 5, shadowColor: "#8b5cf6", shadowOpacity:0.4, shadowRadius:12 },
+  btnSub: { color: "#ddd", fontSize: 10, marginTop: 2, fontWeight: "600" },
   btnT: { color: "#000", fontWeight: "900", fontSize: 16 },
   orText: { color: "#555", textAlign:"center", marginVertical: 15, fontWeight:"800" },
   joinRow: { flexDirection:"row", gap: 10 },

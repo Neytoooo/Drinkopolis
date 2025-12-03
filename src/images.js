@@ -1,4 +1,3 @@
-// === Cases du plateau ===
 export const IMAGES = {
   SOBRE:  require("../assets/tiles/sobre.png"),
   SHOT1:  require("../assets/tiles/shot_plus_1.png"),
@@ -16,14 +15,19 @@ export const IMAGES = {
 };
 
 // === Skins de pions ===
+// AJOUTE TES FICHIERS DANS LE DOSSIER assets/pawns/
 export const PAWN_SKINS = {
   dealer: require("../assets/pawns/pawn_dealer.png"),
   kid:    require("../assets/pawns/pawn_kid.png"),
   leaf:   require("../assets/pawns/pawn_leaf.png"),
+  // --- NOUVEAU PION AJOUTÉ ICI ---
+  king:   require("../assets/pawns/pawn_king.png"), 
 };
 
 export const PAWN_SKIN_LIST = [
   { key: "dealer", label: "Dealer", src: PAWN_SKINS.dealer },
   { key: "kid",    label: "Mec",    src: PAWN_SKINS.kid },
   { key: "leaf",   label: "Leaf",   src: PAWN_SKINS.leaf },
+  // --- ET ICI POUR QU'IL APPARAISSE DANS LE MENU ---
+  { key: "king",   label: "King",   src: PAWN_SKINS.king },
 ];

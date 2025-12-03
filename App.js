@@ -8,6 +8,7 @@ import { Asset } from "expo-asset";
 import SetupScreen from "./src/SetupScreen";
 import GameScreen from "./src/GameScreen";
 import MiniGamesScreen from "./src/components/MiniGamesScreen";
+import LoadingScreen from "./src/LoadingScreen"; // <--- NOUVEAU
 
 // Imports des Mini-jeux
 import TapBattle from "./src/minigames/TapBattle";
@@ -17,31 +18,42 @@ import BeerPong from "./src/minigames/BeerPong";
 import ShadowChallenge from "./src/minigames/ShadowChallenge";
 import TiltGolf from "./src/minigames/TiltGolf";
 
-import { IMAGES } from "./src/images";
+import { IMAGES, PAWN_SKINS } from "./src/images";
 
-// Ignore les warnings visuels non critiques (optionnel)
 LogBox.ignoreLogs(['SafeAreaView has been deprecated']);
 
 const Stack = createNativeStackNavigator();
 
 export default function App() {
-  const [ready, setReady] = useState(false);
+  const [isAssetsLoaded, setIsAssetsLoaded] = useState(false);
+  const [isSplashFinished, setIsSplashFinished] = useState(false);
 
-  // Pré-chargement des assets (Images)
+  // 1. Pré-chargement réel des assets
   useEffect(() => {
     (async () => {
       try {
-        const assets = Object.values(IMAGES).filter((img) => typeof img === 'number');
-        await Asset.loadAsync(assets);
+        const tileAssets = Object.values(IMAGES).filter((img) => typeof img === 'number');
+        const pawnAssets = Object.values(PAWN_SKINS).filter((img) => typeof img === 'number');
+        // Ajoute ici ton image de splash screen aussi pour qu'elle soit dispo tout de suite
+        // await Asset.loadAsync([...tileAssets, ...pawnAssets, require('./assets/splash_custom.png')]);
+        await Asset.loadAsync([...tileAssets, ...pawnAssets]);
       } catch (e) {
         console.log("Erreur chargement images:", e);
       } finally {
-        setReady(true);
+        setIsAssetsLoaded(true);
       }
     })();
   }, []);
 
-  if (!ready) return null;
+  // 2. Si le chargement est fini ET l'animation finie, on lance l'app
+  const appReady = isAssetsLoaded && isSplashFinished;
+
+  if (!appReady) {
+    // Affiche l'écran de chargement tant que tout n'est pas prêt
+    return (
+      <LoadingScreen onFinish={() => setIsSplashFinished(true)} />
+    );
+  }
 
   return (
     <NavigationContainer>
@@ -49,25 +61,15 @@ export default function App() {
         <StatusBar barStyle="light-content" />
 
         <Stack.Navigator screenOptions={{ headerShown: false }}>
-
-          {/* 1. ÉCRAN DE CONFIGURATION (Lobby) */}
-          {/* On ne passe plus de props ici, SetupScreen gère la navigation */}
           <Stack.Screen name="Setup" component={SetupScreen} />
-
-          {/* 2. LE JEU PRINCIPAL */}
           <Stack.Screen name="Game" component={GameScreen} />
-
-          {/* 3. MENU MINI-JEUX */}
           <Stack.Screen name="MiniGames" component={MiniGamesScreen} />
-
-          {/* 4. LES MINI-JEUX */}
           <Stack.Screen name="TapBattle" component={TapBattle} />
           <Stack.Screen name="Memory" component={Memory} />
           <Stack.Screen name="AirHockey" component={AirHockey} />
           <Stack.Screen name="BeerPong" component={BeerPong} />
           <Stack.Screen name="ShadowChallenge" component={ShadowChallenge} />
           <Stack.Screen name="TiltGolf" component={TiltGolf} />
-
         </Stack.Navigator>
       </SafeAreaView>
     </NavigationContainer>
